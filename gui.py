@@ -43,3 +43,8 @@ class TextWindow(object):
         elif align == "right":
             display.blit(self.text, (self.rect.x + self.rect.width -
                                      self.text_rect.width, self.rect.centery - self.text_rect.height//2))
+
+# Info screen
+
+def info_screen(game_display):
+    text1 = TextWindow(100, 100, )

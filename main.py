@@ -5,7 +5,6 @@ import settings as stg
 import matplotlib.pyplot as plt
 from board import Grid
 import gui
-import cv2
 import numpy as np
 
 print(tf.__version__)
@@ -22,19 +21,19 @@ class Game():
         self.drawing = True
         self.clock = pygame.time.Clock()
         self.click = False
+        self.prediction_text = None
+        self.info_screen = False
 
     def new_board(self):
         if self.running:
-            self.board = Grid()
+            self.board = Grid(self)
 
     def new_guess(self):
+        self.info_button = gui.Button(stg.button1_x, stg.button1_y, stg.button1_w, stg.button1_h,
+                                      stg.button1_text_color, stg.button1_bg, stg.button1_text, stg.button1_font)
         while self.running:
             self.new_board()
             self.run()
-            if self.restart():
-                self.running = True
-            else:
-                self.running = False
 
     def run(self):
         self.playing = True
@@ -56,6 +55,7 @@ class Game():
             if event.type == pygame.MOUSEBUTTONUP:
                 self.click = False
 
+        self.mouse_pos = pygame.mouse.get_pos()
         self.keys = pygame.key.get_pressed()
 
         if self.keys[pygame.K_ESCAPE]:
@@ -66,30 +66,48 @@ class Game():
         if self.keys[pygame.K_SPACE]:
             self.drawing = False
             self.guessing = True
+        if self.keys[pygame.K_c]:
+            self.new_board()
 
     def update(self):
-        if self.drawing:
-            if self.click:
-                self.board.update()
-        elif self.guessing:
-            self.guess()
+        self.check_mouse_pos()
+        if not self.info_screen:
+            if self.drawing:
+                if self.click:
+                    self.board.update()
+            elif self.guessing:
+                self.guess()
 
     def draw(self):
         self.game_display.fill(stg.BG_COLOR)
+        self.info_button.draw(self.game_display)
         self.board.draw(self.game_display)
+        if self.prediction_text:
+            self.prediction_text.draw(self.game_display)
+        # if self.info_screen:
+        #     self.board.board_info_text.draw(self.game_display)
         pygame.display.update()
 
-    def restart(self):
-        pass
+    def check_mouse_pos(self):
+        if self.click:
+            if self.mouse_pos[0] in range(self.info_button.x, self.info_button.x + self.info_button.w):
+                if self.mouse_pos[1] in range(self.info_button.y, self.info_button.y + self.info_button.y):
+                    if not self.info_screen:
+                        self.info_screen = True
+                        self.new_board()
+                        pygame.time.wait(100)
+                    else:
+                        self.info_screen = False
+                        pygame.time.wait(100)
 
     def guess(self):
         self.tf_model = tf.keras.models.load_model('num_reader.model')
         # self.data = self.overwriting_data()
         self.data = np.reshape(self.board.grid, (-1, 28, 28))
         self.predictions = self.tf_model.predict(self.data)
-        print(self.predictions[0])
         self.prediction = (np.argmax(self.predictions[0]))
-        print("I predict this number is a:", self.prediction)
+        self.prediction_text = gui.TextWindow(stg.text2_x, stg.text2_y, stg.text2_w, stg.text2_h,
+                                              stg.text2_text_color, (f'{stg.text2_text}{self.prediction}'), stg.text2_font)
         self.guessing = False
         self.drawing = True
 
@@ -102,8 +120,10 @@ class Game():
     #     for row in range(28):
     #         for col in range(28):
     #             x_test[0][row][col] = self.board.grid[row][col]
-    #     plt.imshow(x_test[0])
+    #     plt.imshow(x_test[2])
     #     plt.show()
+    #     print(x_test[2])
+    #     print(self.board.grid)
     #     return x_test
 
 
