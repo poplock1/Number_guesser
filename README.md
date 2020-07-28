@@ -4,7 +4,7 @@ Program that guesses drawn number using neural network.
 ## Instructions 
 Press SPACE to guess\
 Press C to clear board\
-Press ESC to exit program\
+Press ESC to exit program
 
 ## Heading for : 
 * Optimizing input data for better recogniction
